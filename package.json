@@ -1,0 +1,16 @@
+{
+  "name": "NoBin",
+  "version": "0.1.0",
+  "description": "NoBin is a client side encrypted pastebin using the latest NoOps deployment.",
+  "author": "Kadima Services",
+  "license": "MIT",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kadima-services/NoBin"
+  },
+  "dependencies": {
+    "serverless-cors-plugin": "^0.4.1",
+    "serverless-optimizer-plugin": "^2.0.0"
+  }
+}

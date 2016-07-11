@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" class="local-storage history file-upload">
+    <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+        <title>NoBin - encrypted pastebin</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="NoBin is a client-side-encrypted
+                   pastebin featuring burn after reading, an history and
+                   a clipboard">
+
+        <link rel="shortcut icon" href="/favicon.ico">
+
+        <link href="/static/css/prettify.css" rel="stylesheet">
+        <link href="/static/css/bootstrap.css" rel="stylesheet">
+        <link href="/static/css/style.css" rel="stylesheet">
+
+        <!-- Le HTML5 shim, for IE7-8 support of HTML5 elements -->
+        <!--[if lt IE 9]> <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script> <![endif]-->
+
+        <script src="/static/js/jquery-1.7.2.min.js"></script>
+        <script src="/static/js/sjcl.js"></script>
+        <script src="/static/js/behavior.js"></script>
+
+        <script type="text/javascript">
+            zerobin.max_size = 512000;
+        </script>
+
+        <script>
+            var tvt = tvt || {};
+            tvt.captureVariables = function(a) {
+                for (var b = new Date, c = {}, d = Object.keys(a || {}), e = 0, f; f = d[e]; e++)
+                    if (a.hasOwnProperty(f) && "undefined" != typeof a[f])
+                        try {
+                            var g = [];
+                            c[f] = JSON.stringify(a[f], function(a, b) {
+                                try {
+                                    if ("function" !== typeof b) {
+                                        if ("object" === typeof b && null !== b) {
+                                            if (b instanceof HTMLElement || b instanceof Node || -1 != g.indexOf(b))
+                                                return;
+                                            g.push(b)
+                                        }
+                                        return b
+                                    }
+                                } catch (c) {}
+                            })
+                        } catch (l) {}
+                    a = document.createEvent("CustomEvent");
+                a.initCustomEvent("TvtRetrievedVariablesEvent", !0, !0, {
+                    variables: c,
+                    date: b
+                });
+                window.dispatchEvent(a)
+            };
+            window.setTimeout(function() {
+                tvt.captureVariables({'dataLayer': window['dataLayer']})
+            }, 2000);
+        </script>
+    </head>
+
+    <body>
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+                    <a class="brand" href="/">
+                        S3-<span>ø</span>bin<em>.net</em>
+                    </a>
+                    <div class="nav-collapse">
+                        <ul class="nav">
+                            <li class="active">
+                                <a href="/">Home</a>
+                            </li>
+                            <li>
+                                <a href="https://github.com/kadima-services/NoBin">Download NoBin</a>
+                            </li>
+                            <li>
+                                <a href="/faq/">Faq</a>
+                            </li>
+                        </ul>
+                        <p class="about pull-right">
+                            "A client side encrypted PasteBin"<br>
+                            <span>All pastes are AES256 encrypted, we cannot know what you paste...</span>
+                        </p>
+                    </div>
+                    <!--/.nav-collapse -->
+                </div>
+            </div>
+        </div>
+
+        <noscript class="container noscript">
+            &lt;p&gt;This pastebin uses client-side encryption. Therefore, it needs JavaScript enabled.&lt;/p&gt; &lt;p&gt;It seems like your browser doesn't have JavaScript enable.&lt;/p&gt; &lt;p&gt;Please enable JavaScript for this website or use a
+            JavaScript-capable web browser.&lt;/p&gt;
+        </noscript>
+
+        <div class="container" id="wrap-content" style="display: block;">
+            <div class="row">
+                <div class="span2">
+                    <div class="well sidebar-nav">
+                        <ul class="nav nav-list previous-pastes">
+                            <li class="nav-header">Previous pastes</li>
+                        </ul>
+                    </div>
+                    <!--/.well -->
+                </div>
+                <!--/span-->
+
+                <div id="main" class="span10">
+
+                    <div class="well paste-form">
+                        <form action="/" method="get" accept-charset="utf-8">
+                            <p class="lnk-option">
+                                <a id="clip-board" href="" data-clipboard-target="#paste-content">Copy To Clipboard</a>
+                                |
+                                <a id="short-url" href="#">Get short url</a>
+                                |
+                                <a id="email-link" href="#">Email this</a>
+
+                                <span class="paste-option btn-group top">
+                                    <button class="btn btn-clone">
+                                        <i class="icon-camera"></i>&nbsp;Clone</button>
+                                    <button class="btn">New Paste</button>
+                                </span>
+                            </p>
+                            <div class="progress progress-striped active">
+                                <div class="bar"></div>
+                            </div>
+                            <p id="expiration-tag"></p>
+                            <p></p>
+                            <pre id="paste-content" class="prettyprint">
+                <!-- output Code displayed here -->
+                <code></code>
+              </pre>
+                            <p></p>
+                            <p class="paste-option btn-group bottom">
+                                <button class="btn btn-clone">
+                                    <i class="icon-camera"></i>&nbsp;Clone</button>
+                                <button class="btn">New Paste</button>
+                            </p>
+                        </form>
+                    </div>
+
+                    <!-- For cloning -->
+                    <div class="submit-form clone">
+                        <form class="well" method="post" action="/paste/create">
+                            <p class="paste-option">
+                                <label for="expiration">Expiration:</label>
+                                <select id="expiration" name="expiration">
+                                    <option value="burn_after_reading">Burn after reading</option>
+                                    <option selected="" value="1_day">1 day</option>
+                                    <option value="1_month">1 month</option>
+                                    <option value="never">Never</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                                <button class="btn btn-danger">Cancel clone</button>
+                            </p>
+
+                            <div>
+                                <div class="progress progress-striped active">
+                                    <div class="bar"></div>
+                                </div>
+                                <textarea rows="10" style="width: 100%; overflow: hidden; height: 54px;" class="input-xlarge" id="content" name="content"></textarea>
+                                <div
+                                    style="position: absolute; display: none; word-wrap: break-word; white-space: pre-wrap; border: 1.11111px solid rgb(204, 204, 204); font-weight: normal; width: 100%; font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; line-height: 18px; font-size: 13px; padding: 4px;">&nbsp;</div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!--/span-->
+
+            </div>
+            <!--/row-->
+
+            <hr>
+            <footer>
+                <blockquote>
+                    <p>“Few persons can be made to believe that it is not quite an easy thing to invent a method of secret writing which shall baffle investigation. Yet it may be roundly asserted that human ingenuity cannot concoct a cipher which human ingenuity cannot
+                        resolve...”</p>
+                    <small>Edgar Allan Poe</small>
+                </blockquote>
+                <br>
+                <p class="greetings span12">
+                    Forked from
+                    <a href="http://0bin.net/">0bin.net</a><br>
+                    Based on an original idea from
+                    <a href="http://sebsauvage.net/paste/">sebsauvage.net</a><br>
+                    <a href="http://sametmax.com">Sam &amp; Max</a>
+                </p>
+            </footer>
+
+            <script src="/static/js/jquery.elastic.source.js"></script>
+            <script src="/static/js/lzw.js"></script>
+            <script src="/static/js/prettify.min.js"></script>
+            <script src="/static/js/clipboard.min.js"></script>
+
+            <p id="alert-template">
+                <a class="close" data-dismiss="alert" href="/paste/Jygxa9W-#">×</a>
+                <strong class="title"></strong>
+                <span class="message"></span>
+            </p>
+        </div>
+        <!--/wrap-content-->
+        <script aria-hidden="true" type="application/x-lastpass" id="hiddenlpsubmitdiv" style="display: none;"></script>
+        <script>
+            try {
+                (function() {
+                    for (var lastpass_iter = 0; lastpass_iter < document.forms.length; lastpass_iter++) {
+                        var lastpass_f = document.forms[lastpass_iter];
+                        if (typeof(lastpass_f.lpsubmitorig2) == "undefined") {
+                            lastpass_f.lpsubmitorig2 = lastpass_f.submit;
+                            if (typeof(lastpass_f.lpsubmitorig2) == 'object') {
+                                continue;
+                            }
+                            lastpass_f.submit = function() {
+                                var form = this;
+                                var customEvent = document.createEvent("Event");
+                                customEvent.initEvent("lpCustomEvent", true, true);
+                                var d = document.getElementById("hiddenlpsubmitdiv");
+                                if (d) {
+                                    for (var i = 0; i < document.forms.length; i++) {
+                                        if (document.forms[i] == form) {
+                                            if (typeof(d.innerText) != 'undefined') {
+                                                d.innerText = i.toString();
+                                            } else {
+                                                d.textContent = i.toString();
+                                            }
+                                        }
+                                    }
+                                    d.dispatchEvent(customEvent);
+                                }
+                                form.lpsubmitorig2();
+                            }
+                        }
+                    }
+                })()
+            } catch (e) {}
+        </script>
+    </body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>NoBin - encrypted pastebin</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="NoBin is a client-side-encrypted
+                   pastebin featuring burn after reading, an history and
+                   a clipboard">
+
+        <link rel="shortcut icon" href="/favicon.ico">
+
+        <link href="/static/css/prettify.css" rel="stylesheet"/>
+        <link href="/static/css/bootstrap.css" rel="stylesheet">
+        <link href="/static/css/style.css?0.5" rel="stylesheet">
+
+        <!-- Le HTML5 shim, for IE7-8 support of HTML5 elements -->
+        <!--[if lt IE 9]> <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script> <![endif]-->
+
+        <script src="/static/js/jquery-1.7.2.min.js"></script>
+        <script src="/static/js/sjcl.js"></script>
+        <script src="/static/js/behavior.js?0.5"></script>
+
+        <script type="text/javascript">
+            zerobin.max_size = 512000;
+        </script>
+    </head>
+
+    <body>
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+                    <a class="brand" href="/">
+                        S3-<span>ø</span>bin<em>.net</em>
+                    </a>
+                    <div class="nav-collapse">
+                        <ul class="nav">
+                            <li class="active">
+                                <a href="/">Home</a>
+                            </li>
+                            <li>
+                                <a href="https://github.com/kadima-services/NoBin">Download NoBin</a>
+                            </li>
+                            <li>
+                                <a href="/faq/">Faq</a>
+                            </li>
+                        </ul>
+                        <p class="about pull-right">
+                            "A client side encrypted PasteBin"<br>
+                            <span>All pastes are AES256 encrypted, we cannot know what you paste...</span>
+                        </p>
+                    </div>
+                    <!--/.nav-collapse -->
+                </div>
+            </div>
+        </div>
+
+        <noscript class="container noscript">
+            <p>This pastebin uses client-side encryption. Therefore, it needs JavaScript enabled.</p>
+            <p>It seems like your browser doesn't have JavaScript enable.</p>
+            <p>Please enable JavaScript for this website or use a JavaScript-capable web browser.</p>
+        </noscript>
+
+        <div class="container" id="wrap-content">
+            <div class="row">
+                <div class="span2">
+                    <div class="well sidebar-nav">
+                        <ul class="nav nav-list previous-pastes">
+                            <li class="nav-header">Previous pastes</li>
+                            <li class="item local-storage">
+                                <em class="grey">
+                                    Your previous pastes will be saved in your browser using
+                                    <a href="http://www.w3.org/TR/webstorage/">localStorage</a>.
+                                </em>
+                            </li>
+                            <li class="item no-local-storage">
+                                <em class="grey">
+                                    Sorry your browser does not support
+                                    <a href="http://www.w3.org/TR/webstorage/">LocalStorage</a>, We cannot display your previous pastes.
+                                </em>
+                            </li>
+                        </ul>
+                    </div>
+                    <!--/.well -->
+                </div>
+                <!--/span-->
+
+                <div id='main' class="span10">
+                    <p class="file-upload">
+                        <input type="button" class="btn btn-upload" value="Upload File">
+                        <input type="file" class="hide-upload" id="file-upload">
+                    </p>
+
+                    <form class="well" method="post" action="/paste/create">
+                        <p class="paste-option">
+                            <label for="expiration">Expiration</label>
+                            <select id="expiration" name="expiration">
+                                <option value="burn_after_reading">Burn after reading</option>
+                                <option selected value="1_day">1 day</option>
+                                <option value="1_month">1 month</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </p>
+                        <p>
+                            <div class="progress progress-striped active">
+                                <div class="bar"></div>
+                            </div>
+                            <textarea rows="10" style="width:100%;" class="input-xlarge" id="content" name="content"></textarea>
+                        </p>
+                    </form>
+                </div>
+                <!--/span-->
+            </div>
+            <!--/row-->
+            <hr>
+
+            <footer>
+                <blockquote>
+                    <p>“Few persons can be made to believe that it is not quite an easy thing to invent a method of secret writing which shall baffle investigation. Yet it may be roundly asserted that human ingenuity cannot concoct a cipher which human ingenuity cannot
+                        resolve...”</p>
+                    <small>Edgar Allan Poe</small>
+                </blockquote>
+            </br>
+            <p class="greetings span12">
+                Forked from
+                <a href="http://0bin.net/">0bin.net</a><br>
+                Based on an original idea from
+                <a href="http://sebsauvage.net/paste/">sebsauvage.net</a><br>
+                <a href="http://sametmax.com">Sam &amp; Max</a>
+            </p>
+        </footer>
+
+        <script src="/static/js/jquery.elastic.source.js"></script>
+        <script src="/static/js/lzw.js"></script>
+        <script src="/static/js/prettify.min.js"></script>
+        <script src="/static/js/ZeroClipboard.js"></script>
+
+        <p id="alert-template">
+            <a class="close" data-dismiss="alert" href="#">×</a>
+            <strong class="title"></strong>
+            <span class="message"></span>
+        </p>
+    </div>
+    <!--/wrap-content-->
+</body>
+</html>

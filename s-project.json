@@ -1,0 +1,8 @@
+{
+  "name": "NoBin",
+  "custom": {},
+  "plugins": [
+    "serverless-optimizer-plugin",
+    "serverless-cors-plugin"
+  ]
+}

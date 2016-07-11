@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>NoBin - encrypted pastebin</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="NoBin is a client-side-encrypted
+                   pastebin featuring burn after reading, an history and
+                   a clipboard">
+
+        <link rel="shortcut icon" href="/favicon.ico">
+
+        <link href="/static/css/prettify.css" rel="stylesheet"/>
+        <link href="/static/css/bootstrap.css" rel="stylesheet">
+        <link href="/static/css/style.css?0.5" rel="stylesheet">
+
+        <!-- Le HTML5 shim, for IE7-8 support of HTML5 elements -->
+        <!--[if lt IE 9]> <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script> <![endif]-->
+
+        <script src="/static/js/jquery-1.7.2.min.js"></script>
+        <script src="/static/js/sjcl.js"></script>
+        <script src="/static/js/behavior.js?0.5"></script>
+
+        <script type="text/javascript">
+            zerobin.max_size = 512000;
+        </script>
+
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+                    <a class="brand" href="/">
+                        S3-<span>ø</span>bin<em>.net</em>
+                    </a>
+                    <div class="nav-collapse">
+                        <ul class="nav">
+                            <li class="active">
+                                <a href="/">Home</a>
+                            </li>
+                            <li>
+                                <a href="https://github.com/kadima-services/NoBin">Download NoBin</a>
+                            </li>
+                            <li>
+                                <a href="/faq/">Faq</a>
+                            </li>
+                        </ul>
+                        <p class="about pull-right">
+                            "A client side encrypted PasteBin"<br>
+                            <span>All pastes are AES256 encrypted, we cannot know what you paste...</span>
+                        </p>
+                    </div>
+                    <!--/.nav-collapse -->
+                </div>
+            </div>
+        </div>
+
+        <noscript class="container noscript">
+            <p>This pastebin uses client-side encryption. Therefore, it needs JavaScript enabled.</p>
+            <p>It seems like your browser doesn't have JavaScript enable.</p>
+            <p>Please enable JavaScript for this website or use a JavaScript-capable web browser.</p>
+        </noscript>
+
+        <div class="container" id="wrap-content">
+            <div class="row">
+                <div class="span2">
+                    <div class="well sidebar-nav">
+                        <ul class="nav nav-list previous-pastes">
+                            <li class="nav-header">Previous pastes</li>
+                            <li class="item local-storage">
+                                <em class="grey">
+                                    Your previous pastes will be saved in your browser using
+                                    <a href="http://www.w3.org/TR/webstorage/">localStorage</a>.
+                                </em>
+                            </li>
+                            <li class="item no-local-storage">
+                                <em class="grey">
+                                    Sorry your browser does not support
+                                    <a href="http://www.w3.org/TR/webstorage/">LocalStorage</a>, We cannot display your previous pastes.
+                                </em>
+                            </li>
+                        </ul>
+                    </div>
+                    <!--/.well -->
+                </div>
+                <!--/span-->
+
+                <div id='main' class="span10">
+                    <div class="well" id="faq">
+
+                        <h1>FAQ</h1>
+
+                        <hr width="90%">
+
+                        <dl>
+                            <dt>How does NoBin work?</dt>
+                            <dd>
+                                <p>A random key is generated and used to encrypt the paste, thanks to the
+                                    <a href="http://crypto.stanford.edu/sjcl/">sjcl</a>
+                                    JavaScript library.</p>
+                                <p>The encrypted content is then sent to the server, which returns the address of the newly created paste.</p>
+                                <p>The JavaScript code redirects to this address, but it adds the encryption key in the URL hash (#).</p>
+                                <p>When somebody wants to read the paste, they will usually click on a link with this URL. If the hash containing the key is a part of it, NoBin's JavaScript will use it to decrypt the content sent by the server.</p>
+                                <p>The browser never sends the hash to the server, so the latter does not receives the key at any time.</p>
+                            </dd>
+                            <dt>But JavaScript encryption is not secure!</dt>
+                            <dd>
+                                <p>No, it isn't.</p>
+                                <p>The goal of NoBin is
+                                    <strong>not</strong>
+                                    to protect the user and their data (including, obviously, their secrets).</p>
+                                <p>Instead, it aims to protect the host from being sued for the content users pasted on the pastebin. The idea is that you cannot require somebody to moderate something they cannot read - as such, the host is granted plausible deniability.</p>
+
+                                <p>Remember that as an user, you should use NoBin in the same way as unencrypted and insecure pastebins - that is, with caution. The only difference with those is that if you decide to host a NoBin server, the encryption feature hopefully be used as a
+                                    defense. This is not proven, though! :-)
+
+                                </dd>
+                                <dt>What if the server changes the JavaScript code? And what happens in the case of a
+                                    <a href="https://en.wikipedia.org/wiki/Man-in-the-middle_attack">MITM attack</a>?</dt>
+                                <dd>
+                                    <p>Read above.</p>
+                                    <p>NoBin is not built, and does not aim, to protect user data - but rather the host. If any user data is compromised, NoBin still provides the host with plausible deniability (as they ignore the content of the pastes).</p>
+                                    <p>It would make no sense if the host was to compromise the encryption process to read the data; in that case, they wouldn't have installed NoBin in the first place, as NoBin is here to protect them.</p>
+                                    <p>
+                                        <strong>However, if you want to ensure your data is not read in anyway, you should not use NoBin</strong>. Use
+                                        <a href="http://www.cypherpunks.ca/otr/">OTR</a>
+                                        for chatting,
+                                        <a href="https://gnupg.org/">GnuPG</a>
+                                        for encrypted & verified data sharing, with
+                                        <a href="https://www.enigmail.net/">EnigMail</a>
+                                        for emails.</p>
+                                    <p>It would be unlikely for those softwares to fail you. Errors will nearly always come from your side - you ought to have a perfect
+                                        <a href="https://en.wikipedia.org/wiki/Operations_security">operations security</a>
+                                        if you do not want your data to be leaked. Remember to use your common sense.</p>
+                                </dd>
+                                <dt>How did the idea of NoBin emerge?</dt>
+                                <dd>
+                                    <p>NoBin is based on
+                                        <a href="http://sebsauvage.net/wiki/doku.php?id=php:zerobin">sebsauvage's work</a>. The project sprang as a reaction to
+                                        <a href="https://www.zdnet.com/blog/security/pastebin-to-hunt-for-hacker-pastes-anonymous-cries-censorship/11336">the implementation of a moderation system on Pastebin</a>, due to the significant amount of illegal content pasted on it, or that it linked to.</p>
+                                </dd>
+                                <dt>How can I get NoBin?</dt>
+                                <dd>
+                                    <p>NoBin is an open-source project, and the code is hosted on
+                                        <a href="https://github.com/kadima-services/NoBin">GitHub</a>. You can either download a tarball or clone the repository.</p>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <!--/span-->
+
+                </div>
+                <!--/row-->
+
+                <hr>
+
+                <footer>
+                    <blockquote>
+                        <p>“Few persons can be made to believe that it is not quite an easy thing to invent a method of secret writing which shall baffle investigation. Yet it may be roundly asserted that human ingenuity cannot concoct a cipher which human ingenuity cannot
+                            resolve...”</p>
+                        <small>Edgar Allan Poe</small>
+                    </blockquote>
+                </br>
+                <p class="greetings span12">
+                    Forked from
+                    <a href="http://0bin.net/">0bin.net</a><br>
+                    Based on an original idea from
+                    <a href="http://sebsauvage.net/paste/">sebsauvage.net</a><br>
+                    <a href="http://sametmax.com">Sam &amp; Max</a>
+                </p>
+            </footer>
+
+            <script src="/static/js/jquery.elastic.source.js"></script>
+            <script src="/static/js/lzw.js"></script>
+            <script src="/static/js/prettify.min.js"></script>
+            <script src="/static/js/ZeroClipboard.js"></script>
+
+            <p id="alert-template">
+                <a class="close" data-dismiss="alert" href="#">×</a>
+                <strong class="title"></strong>
+                <span class="message"></span>
+            </p>
+        </div>
+        <!--/wrap-content-->
+
+    </body>
+
+</html>
