@@ -1,0 +1,80 @@
+service: nobin
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+plugins:
+
+resources:
+  Resources:
+    IamRoleLambda: ${file(resources/IamRoleLambda.yaml)}
+    IamPolicyLambda: ${file(resources/IamPolicyLambda.yaml)}
+    UploadMetadataDynamoDb: ${file(resources/UploadMetadataDynamoDB.yaml)}
+    UploadDataS3Bucket: ${file(resources/UploadDataS3Bucket.yaml)}
+      
+  Outputs:
+    IamRoleArnLambda:
+      Description: "ARN of the lambda IAM role"
+      Value:
+        "Fn::GetAtt":
+          - IamRoleLambda
+          - Arn
+
+functions:
+  get-data-s3-url:
+    description: "Get the signed url for fetching the uploaded encrypted content from S3"
+    handler: api/get-data-s3-url/handler.handler
+    timeout: 30
+    memorySize: 256
+    events:
+      - http: 
+          method: post
+          path: get-data-s3-url
+          cors: true
+          environment:
+            SERVERLESS_PROJECT: ${self:service}
+            SERVERLESS_STAGE": ${opt:stage, 'dev'}
+            SERVERLESS_REGION": us-east-1
+          # cors: true
+          # endpoints:  
+          #   method: POST
+          #   type: AWS
+          #   authorizationType: none
+          #   responses:
+          #     "400":
+          #       statusCode: "400"
+          #     default:
+          #       statusCode: "200"
+          #       responseParameters: {}
+          #       responseModels: {}
+          #       responseTemplates: {}
+          #       application/json: ""
+
+  upload-data-s3-url:
+    description: "Get the signed url for uploading encrypted content to S3"
+    handler: api/upload-data-s3-url/handler.handler
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          method: post
+          path: upload-data-s3-url
+          cors: true
+          environment:
+            SERVERLESS_PROJECT: ${self:service}
+            SERVERLESS_STAGE: ${opt:stage, 'dev'}
+            SERVERLESS_REGION: us-east-1
+  
+  index:
+    description: "Attempt at adding an index for index.html"
+    handler: src/index.html
+    events:
+      - http:
+          method: get
+          path: /
+          cors: true
+          environment:
+            SERVERLESS_PROJECT: ${self:service}
+            SERVERLESS_STAGE: ${opt:stage, 'dev'}
+            SERVERLESS_REGION: us-east-1

@@ -1,0 +1,14 @@
+Type: AWS::S3::Bucket
+Properties:
+  CorsConfiguration:
+    CorsRules:
+      - AllowedHeaders:
+          - "*"
+        AllowedMethods:
+          - GET
+          - PUT
+        AllowedOrigins:
+          - "*"
+        Id: myCORSRuleId1
+        MaxAge: "3600"
+  BucketName: "${self:service}-upload-data-${opt:stage, 'dev'}"
