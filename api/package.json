@@ -1,5 +1,5 @@
 {
-  "name": "NoBin API",
+  "name": "NoBin_API",
   "version": "0.1.0",
   "description": "NoBin is a client side encrypted pastebin using the latest NoOps deployment.",
   "author": "Kadima Services",
@@ -10,7 +10,8 @@
     "url": "git://github.com/kadima-services/NoBin"
   },
   "dependencies": {
-    "moment": "^2.13.0",
-    "q": "^1.4.1"
+    "moment": "^2.24.0",
+    "q": "^1.4.1",
+    "aws-sdk"
   }
 }

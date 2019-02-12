@@ -12,6 +12,8 @@
   "dependencies": {
     "aws-sdk": "^2.397.0",
     "moment": "^2.13.0",
-    "q": "^1.4.1"
+    "q": "^1.4.1",
+    "serverless": "^1.37.1",
+    "serverless-s3-sync": "^1.7.2"
   }
 }

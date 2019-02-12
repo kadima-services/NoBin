@@ -2,24 +2,114 @@ service: nobin
 
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs8.10
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:PutObject"
+        - "s3:PutObjectAcl"
+      Resource:
+        - Fn::Join:
+            - ""
+            - - "arn:aws:s3:::"
+              - mmx-nobin-${self:custom.config.stage}
+              - '/*'
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+      Resource:
+        - Fn::Join:
+            - ""
+            - - "arn:aws:s3:::"
+              - ${self:service}-upload-data-${self:custom.config.stage}
+              - '/*'
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:DescribeTable"
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+        - "dynamodb:GetItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+      Resource:
+        - Fn::GetAtt:
+            [ uploadMetadataTable, Arn ]
 
 plugins:
+  - serverless-s3-sync
 
+custom:
+  s3Sync:
+    - bucketName: mmx-nobin-${self:custom.config.stage}
+      localDir: src/
+      acl: public-read
+  config:
+    stage: dev
+    region: us-east-1
 resources:
   Resources:
-    IamRoleLambda: ${file(resources/IamRoleLambda.yaml)}
-    IamPolicyLambda: ${file(resources/IamPolicyLambda.yaml)}
-    UploadMetadataDynamoDb: ${file(resources/UploadMetadataDynamoDB.yaml)}
-    UploadDataS3Bucket: ${file(resources/UploadDataS3Bucket.yaml)}
-      
-  Outputs:
-    IamRoleArnLambda:
-      Description: "ARN of the lambda IAM role"
-      Value:
-        "Fn::GetAtt":
-          - IamRoleLambda
-          - Arn
+    S3BucketPublicBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: PublicRead
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: error.html
+        BucketName:  mmx-nobin-${self:custom.config.stage}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+    uploadS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: PublicRead
+        BucketName:  ${self:service}-upload-data-${self:custom.config.stage}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+    uploadMetadataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-upload-metadata-${self:custom.config.stage}
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
 
 functions:
   get-data-s3-url:
@@ -27,54 +117,29 @@ functions:
     handler: api/get-data-s3-url/handler.handler
     timeout: 30
     memorySize: 256
+    environment:
+      SERVERLESS_PROJECT: ${self:service}
+      SERVERLESS_STAGE: ${self:custom.config.stage}
+      SERVERLESS_REGION: us-east-1
     events:
-      - http: 
+      - http:
           method: post
           path: get-data-s3-url
-          cors: true
-          environment:
-            SERVERLESS_PROJECT: ${self:service}
-            SERVERLESS_STAGE": ${opt:stage, 'dev'}
-            SERVERLESS_REGION": us-east-1
-          # cors: true
-          # endpoints:  
-          #   method: POST
-          #   type: AWS
-          #   authorizationType: none
-          #   responses:
-          #     "400":
-          #       statusCode: "400"
-          #     default:
-          #       statusCode: "200"
-          #       responseParameters: {}
-          #       responseModels: {}
-          #       responseTemplates: {}
-          #       application/json: ""
+          cors:
+            ${file(cors.yaml):cors}
 
   upload-data-s3-url:
     description: "Get the signed url for uploading encrypted content to S3"
     handler: api/upload-data-s3-url/handler.handler
     timeout: 30
     memorySize: 256
+    environment:
+      SERVERLESS_PROJECT: ${self:service}
+      SERVERLESS_STAGE: ${self:custom.config.stage}
+      SERVERLESS_REGION: us-east-1
     events:
       - http:
           method: post
           path: upload-data-s3-url
-          cors: true
-          environment:
-            SERVERLESS_PROJECT: ${self:service}
-            SERVERLESS_STAGE: ${opt:stage, 'dev'}
-            SERVERLESS_REGION: us-east-1
-  
-  index:
-    description: "Attempt at adding an index for index.html"
-    handler: src/index.html
-    events:
-      - http:
-          method: get
-          path: /
-          cors: true
-          environment:
-            SERVERLESS_PROJECT: ${self:service}
-            SERVERLESS_STAGE: ${opt:stage, 'dev'}
-            SERVERLESS_REGION: us-east-1
+          cors:
+            ${file(cors.yaml):cors}

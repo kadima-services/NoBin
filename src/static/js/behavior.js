@@ -1,4 +1,5 @@
 /*global sjcl:true, jQuery:true, $:true, lzw:true, zerobin:true, ZeroClipboard:true, vizhash:true, prettyPrint:true, confirm:true */
+var apiGatewayUrl = 'https://r464mtejz1.execute-api.us-east-1.amazonaws.com/dev/get-data-s3-url';
 ;
 (function () {
   "use strict";
@@ -547,7 +548,7 @@
 
           /* Fetch the s3 signed url to post the encrypted content */
           $.ajax({
-            url: 'https://bvb7rqcdc6.execute-api.us-east-1.amazonaws.com/test/upload-data-s3-url',
+            url: 'https://r464mtejz1.execute-api.us-east-1.amazonaws.com/dev/upload-data-s3-url',
             type: 'POST',
             contentType:'application/json',
             dataType: 'json',
@@ -555,7 +556,7 @@
               expiration: expiration
             }),
             success: function (result) {
-                var s3SignedUrl = result.s3SignedUrl;
+                var s3SignedUrl = result.response.s3SignedUrl;
 
                 /* Upload the encrypted content to S3 */
                 $.ajax({
@@ -568,7 +569,7 @@
                       expiration: expiration
                   }),
                   success: function (s3Output) {
-                    var paste_url = '/paste/index.html?data='+ result.location +'#' + key;
+                    var paste_url = '/paste/index.html?data='+ result.response.location +'#' + key;
 
                     if (zerobin.support.localStorage) {
                       zerobin.storePaste(paste_url);
@@ -613,7 +614,7 @@
   if(location){
     /* Fetch the s3 data url from location */
     $.ajax({
-      url: 'https://bvb7rqcdc6.execute-api.us-east-1.amazonaws.com/test/get-data-s3-url',
+      url: 'https://r464mtejz1.execute-api.us-east-1.amazonaws.com/dev/get-data-s3-url',
       type: 'POST',
       contentType:'application/json',
       dataType: 'json',
@@ -641,7 +642,7 @@
         }
 
         /* Download the encrypted data from s3 */
-        $.get(data.s3SignedUrl)
+        $.get(data.response.s3SignedUrl)
         .error(function (error) {
           console.log(error);
         })
