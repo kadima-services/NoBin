@@ -1,10 +1,29 @@
 # NoBin
-----
-
 NoBin is a "Serverless" NoOps implementation of a client side encrypted pastebin, running in AWS S3/Lambda.
 
-Based on 0bin from [sametmax](https://github.com/sametmax/0bin).
+Based on 0bin from [sametmax](https://github.com/sametmax/0bin), originally created by [kadima-services](https://github.com/kadima-services/NoBin)
 
+It has since been updated to modern Serverless (as of February 2019).
+
+----
+## Setup
+At this time, minor changes to the code are required.
+
+### Modify behavior.js
+`src\static\js\behavior.js`
+
+Update the `apiGatewayUrl` var to your API gateway ID.
+
+### Update Serverless.yaml
+Ensure that your buckets (`bucketName`) are correct for the deployment.
+
+### Deploy
+serverless deploy
+
+#### S3Sync
+In order to deploy to an s3 bucket, S3Sync is included. This allows hosting of the `src` files.
+
+----
 ## So how is it different from 0bin?
 
 NoBin is built using AWS S3, API Gateway, Lambda, and DynamoDB as the core technology to host the application. This provides an advantage of deploy once. There is no further infrastructure management or monitoring of the application required.
@@ -21,8 +40,7 @@ All encrypted pastes are automatically deleted from the private S3 bucket upon 3
 
 ## How it works
 
-When creating the paste:
-
+### When creating the paste:
 * The browser generates a random key.
 * The pasted content is encrypted with this key using AES256.
 * Request is sent to API Gateway with the expiration time which triggers the lambda function.
@@ -31,8 +49,7 @@ When creating the paste:
 * The encrypted pasted content is uploaded to the S3 location.
 * The browser uses the location detail to create a URL and adds the key in the URL hash (#).
 
-When reading the paste:
-
+### When reading the paste:
 * The browser makes the GET request with the location details in the URL to API Gateway.
 * Because the key is in the hash, the key is not part of the request.
 * The lambda is triggered which checks the expiration detail in DynamoDB, if the content is not expired then a S3 signed get URL is generated.
@@ -41,15 +58,13 @@ When reading the paste:
 * The pasted decrypted content is displayed and source code is highlighted.
 
 
-Key points:
-
+### Key points:
 * Because the key is in the hash, the key is never sent to the back end, therefore it won't appear in the back end logs.
 * All operations, including code coloration, happen on the client-side.
 * The use of managed services like Lambda, DynamoDB and S3 means that there is no server running, and no management is required.
 * The [S3 Object Expiration](https://aws.amazon.com/blogs/aws/amazon-s3-object-expiration/) is used to manage the auto deletion of the encrypted content.
 
 ## Other features
-
 * Automatic code coloration (no need to specify)
 * Pastebin expiration: 1 day and 1 month (Can be modified to have more options)
 * Burn after reading: the paste is destroyed after the first reading
@@ -61,7 +76,6 @@ Key points:
 * Visual hash of a paste to easily tell it apart from others in a list
 
 ## Technologies used
-
 * [Serverless Framework](https://github.com/serverless/serverless)
 * [NodeJS](http://nodejs.org/)
 * [SJCL](http://crypto.stanford.edu/sjcl/) (js crypto tools)
@@ -70,10 +84,9 @@ Key points:
 * [VizHash.js](https://github.com/sametmax/VizHash.js) to create visual hashes from pastes
 
 ## Credits
-
 [0bin.net](http://0bin.net/) by [sametmax](https://github.com/sametmax/0bin).
+[NoBin](https://github.com/kadima-services/NoBin) by [kadima-services]
 
 
 ## License
-
 MIT

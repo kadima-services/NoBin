@@ -10,7 +10,10 @@
     "url": "git://github.com/kadima-services/NoBin"
   },
   "dependencies": {
-    "serverless-cors-plugin": "^0.4.1",
-    "serverless-optimizer-plugin": "^2.0.0"
+    "aws-sdk": "^2.397.0",
+    "moment": "^2.13.0",
+    "q": "^1.4.1",
+    "serverless": "^1.37.1",
+    "serverless-s3-sync": "^1.7.2"
   }
 }

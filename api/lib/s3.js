@@ -15,13 +15,10 @@ module.exports.getObjectSignedURL = function(location) {
   var deferred = Q.defer();
 
   let params = {Bucket: uploadDataBucket, Key: location};
-
   s3.getSignedUrl('getObject', params, (err, url) => {
     if(err) deferred.reject(err);
-
     deferred.resolve(url);
   });
-
   return deferred.promise;
 };
 
@@ -35,9 +32,7 @@ module.exports.putObjectSignedURL = function(location) {
 
   s3.getSignedUrl('putObject', params, (err, url) => {
     if(err) deferred.reject(err);
-
     deferred.resolve(url);
   });
-
   return deferred.promise;
 };

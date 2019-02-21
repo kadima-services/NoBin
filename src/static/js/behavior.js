@@ -1,4 +1,9 @@
 /*global sjcl:true, jQuery:true, $:true, lzw:true, zerobin:true, ZeroClipboard:true, vizhash:true, prettyPrint:true, confirm:true */
+// Any chance this can pull in an env var based on CF outputs? Maybe set in  serverless.yml based on $(cf:nobin.apigwName) ?
+
+// SET THIS TO YOUR APIGW
+// TODO: Make this ingest directly from serverless or CloudFormation outputs.
+var apiGatewayUrl = 'https://{{APIGW ID}}.execute-api.{{REGION}}.amazonaws.com/{{STAGE}}/';
 ;
 (function () {
   "use strict";
@@ -40,7 +45,7 @@
     */
     version: '0.1.1',
     encrypt: function (key, content, toBase64Callback,
-    compressCallback, encryptCallback, doneCallback) {
+      compressCallback, encryptCallback, doneCallback) {
 
       setTimeout(function () {
 
@@ -67,7 +72,7 @@
               try {
                 content = sjcl.encrypt(key, content);
               } catch (e) {
- 			    $('input, textarea, select, button').prop('disabled', false);
+                $('input, textarea, select, button').prop('disabled', false);
                 zerobin.progressBar('form.well .progress').container.hide();
 
                 zerobin.message('error', 'Paste could not be encrypted. Aborting.',
@@ -94,7 +99,7 @@
       and got a suggestion, by all means, speak your mind.
     */
     decrypt: function (key, content, errorCallback, uncompressCallback,
-    fromBase64Callback, toStringCallback, doneCallback) {
+      fromBase64Callback, toStringCallback, doneCallback) {
 
       /* Decrypt */
       setTimeout(function () {
@@ -155,10 +160,10 @@
     /** Create a random base64-like string long enought to be suitable as
         an encryption key */
     makeKey: function (entropy) {
-        entropy = Math.ceil(entropy / 6) * 6; /* non-6-multiple produces same-length base64 */
-        var key = sjcl.bitArray.clamp(
-          sjcl.random.randomWords(Math.ceil(entropy / 32), 0), entropy );
-        return sjcl.codec.base64.fromBits(key, 0).replace(/\=+$/, '').replace(/\//, '-');
+      entropy = Math.ceil(entropy / 6) * 6; /* non-6-multiple produces same-length base64 */
+      var key = sjcl.bitArray.clamp(
+        sjcl.random.randomWords(Math.ceil(entropy / 32), 0), entropy);
+      return sjcl.codec.base64.fromBits(key, 0).replace(/\=+$/, '').replace(/\//, '-');
     },
 
     getFormatedDate: function (date) {
@@ -204,40 +209,40 @@
     },
 
     /** Get a tinyurl using JSONP */
-    getTinyURL: function(longURL, success) {
-        //TODO - Enable api access to only this site  https://support.google.com/cloud/answer/6310037
-        $.ajax({
-  		  url: 'https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyCr1HbY422l3LETQ56kDFs6Mt0hmZqvA4Q',
-  		  type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                "longUrl": longURL
-  		  }),
-  		  processData: false,
-  		  dataType: 'json'
-  	  }).done(function(data){
-  		  success(data.id);
-        });
+    getTinyURL: function (longURL, success) {
+      //TODO - Enable api access to only this site  https://support.google.com/cloud/answer/6310037
+      $.ajax({
+        url: 'https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyCr1HbY422l3LETQ56kDFs6Mt0hmZqvA4Q',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          "longUrl": longURL
+        }),
+        processData: false,
+        dataType: 'json'
+      }).done(function (data) {
+        success(data.id);
+      });
     },
 
     /** Check for browser support of the named featured. Store the result
       and add a class to the html tag with the result */
     support: {
       localStorage: (function () {
-        var val = !! (localStorage);
+        var val = !!(localStorage);
         $('html').addClass((val ? '' : 'no-') + 'local-storage');
         return val;
       })(),
 
       history: (function () {
-        var val = !! (window.history && history.pushState);
+        var val = !!(window.history && history.pushState);
         $('html').addClass((val ? '' : 'no-') + 'history');
         return val;
       })(),
 
       fileUpload: (function () {
         var w = window;
-        var val = !! (w.File && w.FileReader && w.FileList && w.Blob);
+        var val = !!(w.File && w.FileReader && w.FileList && w.Blob);
         $('html').addClass((val ? '' : 'no-') + 'file-upload');
         return val;
       })()
@@ -323,7 +328,7 @@
         copy = copy + $(this).text().replace(/[\u00a0]+/g, ' ') + '\n';
       });
       if (copy == '') {
-          copy = $("#paste-content").text();
+        copy = $("#paste-content").text();
       }
       return copy;
     },
@@ -432,44 +437,44 @@
       var reader = new FileReader();
       if (current_file.type.indexOf('image') == 0) {
         reader.onload = function (event) {
-            var image = new Image();
-            image.src = event.target.result;
+          var image = new Image();
+          image.src = event.target.result;
 
-            image.onload = function() {
-              var maxWidth = 1024,
-                  maxHeight = 1024,
-                  imageWidth = image.width,
-                  imageHeight = image.height;
+          image.onload = function () {
+            var maxWidth = 1024,
+              maxHeight = 1024,
+              imageWidth = image.width,
+              imageHeight = image.height;
 
 
-              if (imageWidth > imageHeight) {
-                if (imageWidth > maxWidth) {
-                  imageHeight *= maxWidth / imageWidth;
-                  imageWidth = maxWidth;
-                }
+            if (imageWidth > imageHeight) {
+              if (imageWidth > maxWidth) {
+                imageHeight *= maxWidth / imageWidth;
+                imageWidth = maxWidth;
               }
-              else {
-                if (imageHeight > maxHeight) {
-                  imageWidth *= maxHeight / imageHeight;
-                  imageHeight = maxHeight;
-                }
-              }
-
-              var canvas = document.createElement('canvas');
-              canvas.width = imageWidth;
-              canvas.height = imageHeight;
-              image.width = imageWidth;
-              image.height = imageHeight;
-              var ctx = canvas.getContext("2d");
-              ctx.drawImage(this, 0, 0, imageWidth, imageHeight);
-
-              var paste = canvas.toDataURL(current_file.type);
-              $('#content').val(paste).trigger('change');
-              $('#content').hide();
-              $(image).css('max-width', '742px');
-  			  $('#content').after(image);
             }
+            else {
+              if (imageHeight > maxHeight) {
+                imageWidth *= maxHeight / imageHeight;
+                imageHeight = maxHeight;
+              }
+            }
+
+            var canvas = document.createElement('canvas');
+            canvas.width = imageWidth;
+            canvas.height = imageHeight;
+            image.width = imageWidth;
+            image.height = imageHeight;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(this, 0, 0, imageWidth, imageHeight);
+
+            var paste = canvas.toDataURL(current_file.type);
+            $('#content').val(paste).trigger('change');
+            $('#content').hide();
+            $(image).css('max-width', '742px');
+            $('#content').after(image);
           }
+        }
         reader.readAsDataURL(current_file);
       } else {
         reader.onload = function (event) {
@@ -519,80 +524,80 @@
 
           zerobin.encrypt(key, paste,
 
-          mkcb(bar.set, 'Encoding to base64...', '45%'),
-          mkcb(bar.set, 'Compressing...', '65%'),
-          mkcb(bar.set, 'Encrypting...', '85%'),
+            mkcb(bar.set, 'Encoding to base64...', '45%'),
+            mkcb(bar.set, 'Compressing...', '65%'),
+            mkcb(bar.set, 'Encrypting...', '85%'),
 
-          /* This block deal with sending the data, redirection or error handling */
-          function (content) {
+            /* This block deal with sending the data, redirection or error handling */
+            function (content) {
 
-            bar.set('Sending...', '95%');
-            var data = {
-              content: content,
-              expiration: expiration
-            };
-            var sizebytes = zerobin.count(JSON.stringify(data));
-            var oversized = sizebytes > zerobin.max_size; // 100kb - the others header information
-            var readableFsize = Math.round(sizebytes / 1024);
-            var readableMaxsize = Math.round(zerobin.max_size / 1024);
+              bar.set('Sending...', '95%');
+              var data = {
+                content: content,
+                expiration: expiration
+              };
+              var sizebytes = zerobin.count(JSON.stringify(data));
+              var oversized = sizebytes > zerobin.max_size; // 100kb - the others header information
+              var readableFsize = Math.round(sizebytes / 1024);
+              var readableMaxsize = Math.round(zerobin.max_size / 1024);
 
-            if (oversized) {
-              bar.container.hide();
-              $form.prop('disabled', false);
-              zerobin.message('error', ('The encrypted file was <strong class="file-size">' + readableFsize +
-                '</strong>KB. You have reached the maximum size limit of ' + readableMaxsize + 'KB.'),
-                'Warning!', true);
-              return;
-            }
+              if (oversized) {
+                bar.container.hide();
+                $form.prop('disabled', false);
+                zerobin.message('error', ('The encrypted file was <strong class="file-size">' + readableFsize +
+                  '</strong>KB. You have reached the maximum size limit of ' + readableMaxsize + 'KB.'),
+                  'Warning!', true);
+                return;
+              }
 
-          /* Fetch the s3 signed url to post the encrypted content */
-          $.ajax({
-            url: 'https://bvb7rqcdc6.execute-api.us-east-1.amazonaws.com/test/upload-data-s3-url',
-            type: 'POST',
-            contentType:'application/json',
-            dataType: 'json',
-            data: JSON.stringify({
-              expiration: expiration
-            }),
-            success: function (result) {
-                var s3SignedUrl = result.s3SignedUrl;
+              /* Fetch the s3 signed url to post the encrypted content */
+              $.ajax({
+                url: apiGatewayUrl + 'upload-data-s3-url',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                  expiration: expiration
+                }),
+                success: function (result) {
+                  var s3SignedUrl = result.response.s3SignedUrl;
 
-                /* Upload the encrypted content to S3 */
-                $.ajax({
-                  url: s3SignedUrl,
-                  type: 'PUT',
-                  contentType:'application/json',
-                  dataType: 'json',
-                  data: JSON.stringify({
+                  /* Upload the encrypted content to S3 */
+                  $.ajax({
+                    url: s3SignedUrl,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: JSON.stringify({
                       content: JSON.parse(content),
                       expiration: expiration
-                  }),
-                  success: function (s3Output) {
-                    var paste_url = '/paste/index.html?data='+ result.location +'#' + key;
+                    }),
+                    success: function (s3Output) {
+                      var paste_url = '/paste/index.html?data=' + result.response.location + '#' + key;
 
-                    if (zerobin.support.localStorage) {
-                      zerobin.storePaste(paste_url);
+                      if (zerobin.support.localStorage) {
+                        zerobin.storePaste(paste_url);
+                      }
+
+                      /* redirect to paste url */
+                      window.location = (paste_url);
+                    },
+                    error: function (error) {
+                      console.log(error);
+                      zerobin.message('error', 'S3 Error - Aborting.', 'Error');
                     }
-
-                    /* redirect to paste url */
-                    window.location = (paste_url);
-                  },
-                  error: function (error) {
-                    console.log(error);
-                    zerobin.message('error', 'S3 Error - Aborting.','Error');
-                  }
-                });
-              },
-              error: function (error) {
-                console.log(error);
-                zerobin.message('error', 'AWS Lambda Error - Aborting.','Error');
-              }
+                  });
+                },
+                error: function (error) {
+                  console.log(error);
+                  zerobin.message('error', 'AWS Lambda Error - Aborting.', 'Error');
+                }
+              });
             });
-          });
         } catch (err) {
           $form.prop('disabled', false);
           bar.container.hide();
-          zerobin.message('error', 'Paste could not be encrypted. Aborting.','Error');
+          zerobin.message('error', 'Paste could not be encrypted. Aborting.', 'Error');
         }
       }
     });
@@ -604,180 +609,180 @@
     Also calculate and set the paste visual hash.
     */
 
-  var content;
-  var key = zerobin.getPasteKey();
-  var error = false;
-  var location = window.location.search.replace('?data=','');
-  $('#paste-content').text('Loading...');
+    var content;
+    var key = zerobin.getPasteKey();
+    var error = false;
+    var location = window.location.search.replace('?data=', '');
+    $('#paste-content').text('Loading...');
 
-  if(location){
-    /* Fetch the s3 data url from location */
-    $.ajax({
-      url: 'https://bvb7rqcdc6.execute-api.us-east-1.amazonaws.com/test/get-data-s3-url',
-      type: 'POST',
-      contentType:'application/json',
-      dataType: 'json',
-      data: JSON.stringify({
+    if (location) {
+      /* Fetch the s3 data url from location */
+      $.ajax({
+        url: apiGatewayUrl + 'get-data-s3-url',
+        type: 'POST',
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify({
           location: location
-      }),
-      success: function (data) {
-        /* Display data not found - error message */
-        if(data.error) {
-          $('#paste-content').text('');
-          return zerobin.message('error', 'Data not found or expired','Error');
-        }
-
-        /* Display data delete - messages */
-        if(data.expiration === 'burn_after_reading') {
-          zerobin.message('info', 'This paste will be deleted the next time it is read.','OK!');
-        }
-        else if(data.expiration === 'deleted') {
-          zerobin.message('warning', 'This paste has self-destructed. If you close this window, there is no way to recover it.','Warning!');
-        }
-
-        /* Display time to expiry message */
-        if(data.timeToExpiry){
-          $('#expiration-tag').text('Expiration ' + data.timeToExpiry);
-        }
-
-        /* Download the encrypted data from s3 */
-        $.get(data.s3SignedUrl)
-        .error(function (error) {
-          console.log(error);
-        })
-        .success(function(output) {
-          /* Display data malformed - error message */
-          if(!output.content) {
+        }),
+        success: function (data) {
+          /* Display data not found - error message */
+          if (data.error) {
             $('#paste-content').text('');
-            return zerobin.message('error', 'Output data malformed','Error');
+            return zerobin.message('error', 'Data not found or expired', 'Error');
           }
 
-          content = output.content;
+          /* Display data delete - messages */
+          if (data.expiration === 'burn_after_reading') {
+            zerobin.message('info', 'This paste will be deleted the next time it is read.', 'OK!');
+          }
+          else if (data.expiration === 'deleted') {
+            zerobin.message('warning', 'This paste has self-destructed. If you close this window, there is no way to recover it.', 'Warning!');
+          }
 
-          /* Display the encrypted content */
-          $('#paste-content').text(JSON.stringify(content));
+          /* Display time to expiry message */
+          if (data.timeToExpiry) {
+            $('#expiration-tag').text('Expiration ' + data.timeToExpiry);
+          }
 
-          if (content && key) {
-            content = JSON.stringify(content);
-            /* Load the lib for visual canvas, create one from the paste id and
-           insert it */
-            $.getScript("/static/js/vizhash.min.js").done(function (script, textStatus) {
-              if (vizhash.supportCanvas) {
-                var vhash = vizhash.canvasHash(zerobin.getPasteId(), 24, 24);
-                $('<a class="vhash" href="#"></a>').click(function (e) {
-                  e.preventDefault();
-                  if (confirm("This picture is unique to your paste so you can identify" +
-                    " it quickly. \n\n Do you want to know more about this?")) {
-                    window.open("https://github.com/sametmax/VizHash.js", "_blank");
+          /* Download the encrypted data from s3 */
+          $.get(data.response.s3SignedUrl)
+            .error(function (error) {
+              console.log(error);
+            })
+            .success(function (output) {
+              /* Display data malformed - error message */
+              if (!output.content) {
+                $('#paste-content').text('');
+                return zerobin.message('error', 'Output data malformed', 'Error');
+              }
+
+              content = output.content;
+
+              /* Display the encrypted content */
+              $('#paste-content').text(JSON.stringify(content));
+
+              if (content && key) {
+                content = JSON.stringify(content);
+                /* Load the lib for visual canvas, create one from the paste id and
+               insert it */
+                $.getScript("/static/js/vizhash.min.js").done(function (script, textStatus) {
+                  if (vizhash.supportCanvas) {
+                    var vhash = vizhash.canvasHash(zerobin.getPasteId(), 24, 24);
+                    $('<a class="vhash" href="#"></a>').click(function (e) {
+                      e.preventDefault();
+                      if (confirm("This picture is unique to your paste so you can identify" +
+                        " it quickly. \n\n Do you want to know more about this?")) {
+                        window.open("https://github.com/sametmax/VizHash.js", "_blank");
+                      }
+                    }).prependTo('.lnk-option').append(vhash.canvas);
                   }
-                }).prependTo('.lnk-option').append(vhash.canvas);
+                });
+
+                var $form = $('input, textarea, select, button').prop('disabled', true);
+
+                var bar = zerobin.progressBar('.well form .progress');
+                bar.container.show();
+                bar.set('Decrypting paste...', '25%');
+
+                zerobin.decrypt(key, content,
+
+                  /* On error*/
+                  function () {
+                    bar.container.hide();
+                    zerobin.message('error', 'Could not decrypt data (Wrong key ?)', 'Error');
+                  },
+
+                  /* Update progress bar */
+                  mkcb(bar.set, 'Decompressing...', '45%'),
+                  mkcb(bar.set, 'Base64 decoding...', '65%'),
+                  mkcb(bar.set, 'From bits to string...', '85%'),
+
+                  /* When done */
+                  function (content) {
+
+                    /* Decrypted content goes back to initial container*/
+                    $('#paste-content').text(content);
+
+                    if (content.indexOf('data:image') == 0) {
+                      // Display Image
+                      $('#paste-content').hide();
+                      var img = $('<img/>');
+                      $(img).attr('src', content);
+                      $(img).css('max-width', '742px');
+                      $('#paste-content').after(img);
+
+                      // Display Download button
+                      $('.btn-clone').hide();
+
+                      var button = $('<a/>').attr('href', content);
+                      $(button).attr('download', '0bin_' + document.location.pathname.split('/').pop());
+                      $(button).addClass('btn');
+                      $(button).html('<i class="icon-download"></i> Download');
+                      $('.btn-clone').after(button);
+
+                    }
+                    bar.set('Code coloration...', '95%');
+
+                    /* Add a continuation to let the UI redraw */
+                    setTimeout(function () {
+                      //to copy the data to user clipboard
+                      var clipboard = new Clipboard('#clip-board');
+
+                      clipboard.on('success', function (e) {
+                        e.clearSelection();
+
+                        zerobin.message('success',
+                          'Copied to clipboard',
+                          'Success!', true);
+                      });
+
+                      //Prevent from redirecting
+                      $('#clip-board').click(function (e) {
+                        e.preventDefault();
+                      });
+
+
+                      /* Setup link to get the paste short url*/
+                      $('#short-url').click(function (e) {
+                        e.preventDefault();
+                        $('#short-url').text('Loading short url...');
+                        zerobin.getTinyURL(window.location.toString(), function (tinyurl) {
+                          $('#copy-success').hide();
+                          zerobin.message('success',
+                            '<a href="' + tinyurl + '">' + tinyurl + '</a>',
+                            'Short url', true);
+                          $('#short-url').text('Get short url');
+                        });
+                      });
+
+                      /** Syntaxic coloration */
+                      if (zerobin.isCode(content) > 100) {
+                        $('#paste-content').addClass('linenums');
+                        prettyPrint();
+                      } else {
+                        if (content.indexOf('data:image') !== 0) {
+                          zerobin.message('info',
+                            "The paste did not seem to be code, so it " +
+                            "was not colorized. " +
+                            "<a id='force-coloration' href='#'>Force coloration</a>",
+                            '', false);
+                        }
+                      }
+
+                      /* Class to switch to paste content style with coloration done */
+                      $('#paste-content').addClass('done');
+
+                      /* Display result */
+                      bar.set('Done', '100%');
+                      bar.container.hide();
+
+                      $form.prop('disabled', false);
+                      content = '';
+                    }, 250);
+                  });
               }
             });
-
-            var $form = $('input, textarea, select, button').prop('disabled', true);
-
-            var bar = zerobin.progressBar('.well form .progress');
-            bar.container.show();
-            bar.set('Decrypting paste...', '25%');
-
-            zerobin.decrypt(key, content,
-
-            /* On error*/
-            function () {
-              bar.container.hide();
-              zerobin.message('error', 'Could not decrypt data (Wrong key ?)', 'Error');
-            },
-
-            /* Update progress bar */
-            mkcb(bar.set, 'Decompressing...', '45%'),
-            mkcb(bar.set, 'Base64 decoding...', '65%'),
-            mkcb(bar.set, 'From bits to string...', '85%'),
-
-            /* When done */
-            function (content) {
-
-              /* Decrypted content goes back to initial container*/
-              $('#paste-content').text(content);
-
-              if (content.indexOf('data:image') == 0) {
-                // Display Image
-                $('#paste-content').hide();
-                var img = $('<img/>');
-                $(img).attr('src', content);
-                $(img).css('max-width', '742px');
-                $('#paste-content').after(img);
-
-                // Display Download button
-                $('.btn-clone').hide();
-
-                var button = $('<a/>').attr('href', content);
-                $(button).attr('download', '0bin_' + document.location.pathname.split('/').pop());
-                $(button).addClass('btn');
-                $(button).html('<i class="icon-download"></i> Download');
-                $('.btn-clone').after(button);
-
-              }
-              bar.set('Code coloration...', '95%');
-
-              /* Add a continuation to let the UI redraw */
-              setTimeout(function () {
-                //to copy the data to user clipboard
-                var clipboard = new Clipboard('#clip-board');
-
-                clipboard.on('success', function(e) {
-                    e.clearSelection();
-                    
-                    zerobin.message('success',
-                      'Copied to clipboard',
-                      'Success!', true);
-                });
-
-                //Prevent from redirecting
-                $('#clip-board').click(function(e) {
-                  e.preventDefault();
-                });
-
-
-                /* Setup link to get the paste short url*/
-                $('#short-url').click(function (e) {
-                  e.preventDefault();
-                  $('#short-url').text('Loading short url...');
-                  zerobin.getTinyURL(window.location.toString(), function (tinyurl) {
-                    $('#copy-success').hide();
-                    zerobin.message('success',
-                      '<a href="' + tinyurl + '">' + tinyurl + '</a>',
-                      'Short url', true);
-                    $('#short-url').text('Get short url');
-                  });
-                });
-
-                /** Syntaxic coloration */
-                if (zerobin.isCode(content) > 100) {
-                  $('#paste-content').addClass('linenums');
-                  prettyPrint();
-                } else {
-                  if (content.indexOf('data:image') !== 0) {
-                    zerobin.message('info',
-                      "The paste did not seem to be code, so it " +
-                      "was not colorized. " +
-                      "<a id='force-coloration' href='#'>Force coloration</a>",
-                      '', false);
-                  }
-                }
-
-                /* Class to switch to paste content style with coloration done */
-                $('#paste-content').addClass('done');
-
-                /* Display result */
-                bar.set('Done', '100%');
-                bar.container.hide();
-
-                $form.prop('disabled', false);
-                content = '';
-                }, 250);
-              });
-            }
-          });
         },
         error: function (error) {
           console.log(error);
@@ -946,8 +951,8 @@
     });
 
     /* Send the paste by email */
-    $('#email-link').click(function(e) {
-        e.target.href = 'mailto:friend@example.com?body=' + window.location.toString();
+    $('#email-link').click(function (e) {
+      e.target.href = 'mailto:friend@example.com?body=' + window.location.toString();
     });
 
 
