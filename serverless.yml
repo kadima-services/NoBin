@@ -13,7 +13,7 @@ provider:
             - ""
             - - "arn:aws:s3:::"
               - mmx-nobin-${self:custom.config.stage}
-              - '/*'
+              - "/*"
     - Effect: "Allow"
       Action:
         - "s3:*"
@@ -22,7 +22,7 @@ provider:
             - ""
             - - "arn:aws:s3:::"
               - ${self:service}-upload-data-${self:custom.config.stage}
-              - '/*'
+              - "/*"
     - Effect: "Allow"
       Action:
         - "dynamodb:DescribeTable"
@@ -33,15 +33,14 @@ provider:
         - "dynamodb:UpdateItem"
         - "dynamodb:DeleteItem"
       Resource:
-        - Fn::GetAtt:
-            [ uploadMetadataTable, Arn ]
+        - Fn::GetAtt: [uploadMetadataTable, Arn]
 
 plugins:
   - serverless-s3-sync
 
 custom:
   s3Sync:
-    - bucketName: mmx-nobin-${self:custom.config.stage}
+    - bucketName: BUCKETNAME_HERE-${self:custom.config.stage}
       localDir: src/
       acl: public-read
   config:
@@ -56,13 +55,13 @@ resources:
         WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: error.html
-        BucketName:  mmx-nobin-${self:custom.config.stage}
+        BucketName: BUCKETNAME_HERE-${self:custom.config.stage}
         CorsConfiguration:
           CorsRules:
             - AllowedOrigins:
-                - '*'
+                - "*"
               AllowedHeaders:
-                - '*'
+                - "*"
               AllowedMethods:
                 - GET
                 - PUT
@@ -74,13 +73,13 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         AccessControl: PublicRead
-        BucketName:  ${self:service}-upload-data-${self:custom.config.stage}
+        BucketName: ${self:service}-upload-data-${self:custom.config.stage}
         CorsConfiguration:
           CorsRules:
             - AllowedOrigins:
-                - '*'
+                - "*"
               AllowedHeaders:
-                - '*'
+                - "*"
               AllowedMethods:
                 - GET
                 - PUT
@@ -102,14 +101,14 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
     GatewayResponseDefault4XX:
-      Type: 'AWS::ApiGateway::GatewayResponse'
+      Type: "AWS::ApiGateway::GatewayResponse"
       Properties:
         ResponseParameters:
           gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
         ResponseType: DEFAULT_4XX
         RestApiId:
-          Ref: 'ApiGatewayRestApi'
+          Ref: "ApiGatewayRestApi"
 
 functions:
   get-data-s3-url:
@@ -125,8 +124,7 @@ functions:
       - http:
           method: post
           path: get-data-s3-url
-          cors:
-            ${file(cors.yaml):cors}
+          cors: ${file(cors.yaml):cors}
 
   upload-data-s3-url:
     description: "Get the signed url for uploading encrypted content to S3"
@@ -141,5 +139,4 @@ functions:
       - http:
           method: post
           path: upload-data-s3-url
-          cors:
-            ${file(cors.yaml):cors}
+          cors: ${file(cors.yaml):cors}
